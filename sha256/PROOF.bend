@@ -283,6 +283,64 @@ def minimal_walk(+m: Spec.Bytes, +k: Nat, -r: Nat, -x: Nat, h: {Nat.add(k, r) ==
         case 1n+p:
           minimal_walk(t, p, 1n+r, x, count_on(p, r, h))
 
+def zeros_take(q: Nat, -x: Nat) ->
+  {List.take(&2, Word(8n), zeros_framed(q, x), q)
+    == List.replicate(Word(8n), q, Spec.byte(0n)) : Spec.Bytes}:
+  match q:
+    case 0n:
+      {==}
+    case 1n+p:
+      %zeros_take(p, x) : {Word.zero(8n) <> List.take(&2, Word(8n), zeros_framed(p, x), p)
+        == Word.zero(8n) <> _ : Spec.Bytes}
+      {==}
+
+def zeros_tail(+q: Nat, -x: Nat) ->
+  {List.take(&2, Word(8n), List.drop(&2, Word(8n), zeros_framed(q, x), 0n),
+      Nat.sub(1n+Spec.len(zeros_framed(q, x)), 9n))
+    == List.replicate(Word(8n), Nat.sub(1n+Spec.len(zeros_framed(q, x)), 9n), Spec.byte(0n))
+    : Spec.Bytes}:
+  match q:
+    case 0n:
+      {==}
+    case 1n+p:
+      %Equal.sym(Nat, Spec.len(zeros_framed(p, x)), 8n+p, tail_len(p, x)) :
+        {List.take(&2, Word(8n), zeros_framed(1n+p, x), Nat.sub(2n+_, 9n))
+          == List.replicate(Word(8n), Nat.sub(2n+_, 9n), Spec.byte(0n)) : Spec.Bytes}
+      zeros_take(1n+p, x)
+
+def zeros_walk(+m: Spec.Bytes, +k: Nat, -x: Nat) ->
+  {List.take(&2, Word(8n), List.drop(&2, Word(8n), framed(m, k, x), 1n+Spec.len(m)),
+      Nat.sub(Nat.sub(Spec.len(framed(m, k, x)), Spec.len(m)), 9n))
+    == List.replicate(Word(8n), Nat.sub(Nat.sub(Spec.len(framed(m, k, x)), Spec.len(m)), 9n),
+      Spec.byte(0n)) : Spec.Bytes}:
+  match m:
+    case Nil{}:
+      match k:
+        case 0n:
+          {==}
+        case 1n:
+          {==}
+        case 2n:
+          {==}
+        case 3n:
+          {==}
+        case 4n:
+          {==}
+        case 5n:
+          {==}
+        case 6n:
+          {==}
+        case 7n:
+          {==}
+        case 8n+q:
+          zeros_tail(q, x)
+    case y <> t:
+      match k:
+        case 0n:
+          zeros_walk(t, 63n, x)
+        case 1n+p:
+          zeros_walk(t, p, x)
+
 def head_or(xs: Spec.Bytes, d: Word(8n)) -> Word(8n):
   match xs:
     case Nil{}:
@@ -483,6 +541,9 @@ def Laws.pad_length(m):
     {List.drop(&2, Word(8n), Sha256.pad(m), _)
       == Spec.be(8n, Nat.mul(8n, Spec.len(m))) : Spec.Bytes}
   drop_app(Sha256.pad.body(m, 63n), Nat.mul(8n, Spec.len(m)))
+
+def Laws.pad_zeros(m):
+  zeros_walk(m, 63n, Nat.mul(8n, Spec.len(m)))
 
 def Laws.pad_minimal(m):
   minimal_walk(m, 63n, 0n, Nat.mul(8n, Spec.len(m)), {==})
