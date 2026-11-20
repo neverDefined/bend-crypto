@@ -47,6 +47,14 @@ law pad_length:
   {List.drop(&2, Word(8n), Sha256.pad(m), Nat.sub(Spec.len(Sha256.pad(m)), 8n))
     == Spec.be(8n, Nat.mul(8n, Spec.len(m))) : Spec.Bytes}
 
+# the bytes between the marker and the length are all zero
+law pad_zeros:
+  for +m: Spec.Bytes
+  {List.take(&2, Word(8n), List.drop(&2, Word(8n), Sha256.pad(m), 1n+Spec.len(m)),
+      Nat.sub(Nat.sub(Spec.len(Sha256.pad(m)), Spec.len(m)), 9n))
+    == List.replicate(Word(8n), Nat.sub(Nat.sub(Spec.len(Sha256.pad(m)), Spec.len(m)), 9n), Spec.byte(0n))
+    : Spec.Bytes}
+
 law pad_minimal:
   for +m: Spec.Bytes
   {Nat.is_le(9n, Nat.sub(Spec.len(Sha256.pad(m)), Spec.len(m))) == True{} : Bool}
