@@ -8,7 +8,7 @@ description: Take a code change from task to a merge-ready branch with hc agents
 Read `hc --skill` first if you have not this session. Templates used here:
 `coord-claude`, `impl-claude`, `impl-codex`, `impl-cursor`, `fast-claude`,
 `browser-claude`, `review-claude`, `review-codex`, `review-cursor`,
-`explain-claude`.
+`explain-claude`, `map-claude`.
 
 The repo's own rules win. If it defines how to delegate, review or call
 agents (wrapper scripts, a routing table, a runbook), follow that and use
@@ -38,6 +38,7 @@ Docs never get a loop or a jury: write them tight, done.
 | Second review, on diffs that touch keys, signing, auth or amounts | a fresh session of the step 5 reviewer, told to break the invariants |
 | Attack round, on code that faces untrusted input | a fresh session of the other vendor's reviewer, with `attack.md` |
 | Catch-up for the user on each change | `explain-claude` (Sonnet), from the diff alone |
+| Map and start-here page after a change to data flow or assumptions | `map-claude` (Opus) |
 | Extra reviewer | `review-cursor`, only when asked; never the only review |
 | Coordinating a whole task while you do something else | `coord-claude` (Opus) |
 | Intensive planning, a hard design or architecture decision, a bug nobody has cracked | `deep-claude` (Fable, high effort), only through the Fable gate below |
@@ -153,11 +154,30 @@ is the path of its report file.
    (`gh pr comment <n> -F <file>`), or put it in your report when there is
    no PR. It never holds up a merge; one that arrives after the merge is
    posted then.
-7. **Report and clean up.** Branch name, gate output, checks not run,
-   findings fixed and declined, the Catch-up, and which model each agent
-   ran (as its CLI shows it). Never push or merge unless asked. `hc kill`
-   and `hc rm` the terminals you started; leave worktrees that hold
-   unmerged work.
+7. **Map**, on by default; a repo turns it off with
+   `"env": {"FACTORY_MAP": "off"}` in its `.claude/settings.json`. Run it
+   when the change is in the sensitive lane, changes how data flows (a
+   process, service, endpoint, store or connection between parts added,
+   removed or rerouted), or changes what the owner can assume (an
+   invariant, a trust boundary, who holds a key, when something halts). A
+   `## Map` section in the repo's rules replaces this test with its own.
+   Start it alongside the Catch-up:
+   `git worktree add --detach ../<repo>-map-<slug> <head>`, then
+   `hc run --bg --name map-<slug> --cwd <that worktree> map-claude` with
+   the repo name, PR number, task, commit range, an output folder and your
+   address. Run it on a machine with Floorplan installed
+   (`bin/with-floorplan` says how). When it reports, publish
+   `<repo>-map.html` with the Artifact tool, put that link in place of
+   `MAP_URL` in `<repo>-start-here.html`, and publish that. Publish over
+   the artifacts titled `<repo> map` and `<repo> Start Here` when the
+   Artifact tool's list shows them, so the owner's links stay the same.
+   Without the Artifact tool, report the two paths. Remove the worktree.
+   It never holds up a merge.
+8. **Report and clean up.** Branch name, gate output, checks not run,
+   findings fixed and declined, the Catch-up, the map and start-here
+   links, and which model each agent ran (as its CLI shows it). Never
+   push or merge unless asked. `hc kill` and `hc rm` the terminals you
+   started; leave worktrees that hold unmerged work.
 
 ## Questions and steers
 
